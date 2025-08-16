@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Mode Photo Editor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        :root {
+            --primary: #6366F1;
+            --primary-hover: #4F46E5;
+            --secondary: #4B5563;
+            --danger: #EF4444;
+            --background: #111827;
+            --surface: #1F2937;
+            --surface-light: #374151;
+            --border: #374151;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .canvas-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        header {
+            padding: 1.5rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            background: var(--background);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        #imageCanvas {
+            max-width: 100%;
+            border-radius: 8px;
+            display: none;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        #canvasPlaceholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            padding: 3rem;
+            text-align: center;
+        }
+        
+        #canvasPlaceholder svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.4;
+        }
+        
+        .controls-section {
+            width: 360px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .controls-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .controls-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .controls-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        .control-card {
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .control-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .file-input-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            width: 100%;
+        }
+        
+        .file-input-label:hover {
+            background: var(--primary-hover);
+        }
+        
+        #imageInput {
+            display: none;
+        }
+        
+        .slider-container {
+            margin-bottom: 1.25rem;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .value-display {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+        
+        .button:hover {
+            background: var(--primary-hover);
+        }
+        
+        .button-secondary {
+            background: var(--secondary);
+        }
+        
+        .button-secondary:hover {
+            background: #374151;
+        }
+        
+        .button-danger {
+            background: var(--danger);
+        }
+        
+        .button-danger:hover {
+            background: #DC2626;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .button-group .button {
+            flex: 1;
+        }
+        
+        .resize-inputs {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .resize-inputs input {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            min-width: 0; /* Allows inputs to shrink */
+        }
+        
+        .format-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .format-option {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            background: var(--background);
+            color: var(--text-secondary);
+        }
+        
+        .format-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .compression-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .compression-container.show {
+            display: block;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--surface-light);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: 1px solid var(--border);
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+        
+        .crop-overlay {
+            position: absolute;
+            border: 2px dashed var(--primary);
+            background: rgba(99, 102, 241, 0.2);
+            pointer-events: none;
+            display: none;
+        }
+        
+        .crop-mode-info {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-light);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: none;
+            z-index: 10;
+        }
+        
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .controls-section {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border);
+                height: 50vh;
+            }
+            
+            .resize-inputs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-section">
+            <header>
+                <h1>Dark Mode Photo Editor</h1>
+                <p class="subtitle">Edit your images with precision and simplicity</p>
+            </header>
+            
+            <div class="canvas-container">
+                <div class="file-input-container">
+                    <label for="imageInput" class="file-input-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Upload Image
+                    </label>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
+                
+                <canvas id="imageCanvas"></canvas>
+                <div class="crop-overlay" id="cropOverlay"></div>
+                <div class="crop-mode-info" id="cropModeInfo">Click and drag to select crop area</div>
+                
+                <div id="canvasPlaceholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <p>Upload an image to start editing</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <div class="controls-header">
+                <h2>Editing Tools</h2>
+            </div>
+            
+            <div class="controls-container">
+                <div class="control-card">
+                    <h3>Basic Adjustments</h3>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Brightness</span>
+                            <span class="value-display" id="brightnessValue">100%</span>
+                        </div>
+                        <input type="range" id="brightnessSlider" class="slider" min="0" max="200" value="100">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Contrast</span>
+                            <span class="value-display" id="contrastValue">100%</span>
+                        </div>
+                        <input type="range" id="contrastSlider" class="slider" min="0" max="200" value="100">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Hue</span>
+                            <span class="value-display" id="hueValue">0°</span>
+                        </div>
+                        <input type="range" id="hueSlider" class="slider" min="0" max="360" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Saturation</span>
+                            <span class="value-display" id="saturationValue">100%</span>
+                        </div>
+                        <input type="range" id="saturationSlider" class="slider" min="0" max="200" value="100">
+                    </div>
+                    
+                    <button id="resetAdjustments" class="button button-secondary">Reset Adjustments</button>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Color Correction</h3>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Red</span>
+                            <span class="value-display" id="redValue">0</span>
+                        </div>
+                        <input type="range" id="redSlider" class="slider" min="-100" max="100" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Green</span>
+                            <span class="value-display" id="greenValue">0</span>
+                        </div>
+                        <input type="range" id="greenSlider" class="slider" min="-100" max="100" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Blue</span>
+                            <span class="value-display" id="blueValue">0</span>
+                        </div>
+                        <input type="range" id="blueSlider" class="slider" min="-100" max="100" value="0">
+                    </div>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Tonal Adjustments</h3>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Highlights</span>
+                            <span class="value-display" id="highlightsValue">0</span>
+                        </div>
+                        <input type="range" id="highlightsSlider" class="slider" min="-100" max="100" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Shadows</span>
+                            <span class="value-display" id="shadowsValue">0</span>
+                        </div>
+                        <input type="range" id="shadowsSlider" class="slider" min="-100" max="100" value="0">
+                    </div>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Crop & Resize</h3>
+                    
+                    <div class="button-group">
+                        <button id="cropButton" class="button">Crop</button>
+                        <button id="applyCropButton" class="button button-secondary" style="display: none;">Apply</button>
+                        <button id="cancelCropButton" class="button button-danger" style="display: none;">Cancel</button>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="resize-inputs">
+                        <input type="number" id="resizeWidth" placeholder="Width">
+                        <input type="number" id="resizeHeight" placeholder="Height">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="resizeImage" class="button">Resize</button>
+                        <button id="optimizeWeb" class="button button-secondary">Optimize</button>
+                    </div>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Export</h3>
+                    
+                    <div class="format-selector">
+                        <div class="format-option active" data-format="jpeg">JPEG</div>
+                        <div class="format-option" data-format="png">PNG</div>
+                        <div class="format-option" data-format="webp">WebP</div>
+                    </div>
+                    
+                    <div class="compression-container show" id="jpegCompression">
+                        <div class="slider-label">
+                            <span>Compression Quality</span>
+                            <span class="value-display" id="jpegQualityValue">90%</span>
+                        </div>
+                        <input type="range" id="jpegQualitySlider" class="slider" min="1" max="100" value="90">
+                    </div>
+                    
+                    <div class="compression-container" id="webpCompression">
+                        <div class="slider-label">
+                            <span>Compression Quality</span>
+                            <span class="value-display" id="webpQualityValue">80%</span>
+                        </div>
+                        <input type="range" id="webpQualitySlider" class="slider" min="1" max="100" value="80">
+                    </div>
+                    
+                    <button id="downloadImage" class="button" style="width: 100%; margin-top: 1rem;">
+                        Download Image
+                    </button>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Reset</h3>
+                    <button id="resetImage" class="button button-danger" style="width: 100%;">Reset to Original</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            const imageInput = document.getElementById('imageInput');
+            const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+            const notification = document.getElementById('notification');
+            const cropOverlay = document.getElementById('cropOverlay');
+            const cropModeInfo = document.getElementById('cropModeInfo');
+            
+            let originalImage = null;
+            let currentImage = null;
+            let selectedFormat = 'jpeg';
+            let cropMode = false;
+            let cropStartX = 0;
+            let cropStartY = 0;
+            let cropEndX = 0;
+            let cropEndY = 0;
+            let isDrawingCrop = false;
+            
+            // Adjustment sliders
+            const brightnessSlider = document.getElementById('brightnessSlider');
+            const contrastSlider = document.getElementById('contrastSlider');
+            const hueSlider = document.getElementById('hueSlider');
+            const saturationSlider = document.getElementById('saturationSlider');
+            
+            // Color correction sliders
+            const redSlider = document.getElementById('redSlider');
+            const greenSlider = document.getElementById('greenSlider');
+            const blueSlider = document.getElementById('blueSlider');
+            
+            // Tonal adjustment sliders
+            const highlightsSlider = document.getElementById('highlightsSlider');
+            const shadowsSlider = document.getElementById('shadowsSlider');
+            
+            // Value displays
+            const brightnessValue = document.getElementById('brightnessValue');
+            const contrastValue = document.getElementById('contrastValue');
+            const hueValue = document.getElementById('hueValue');
+            const saturationValue = document.getElementById('saturationValue');
+            const redValue = document.getElementById('redValue');
+            const greenValue = document.getElementById('greenValue');
+            const blueValue = document.getElementById('blueValue');
+            const highlightsValue = document.getElementById('highlightsValue');
+            const shadowsValue = document.getElementById('shadowsValue');
+            
+            // Compression sliders and values
+            const jpegQualitySlider = document.getElementById('jpegQualitySlider');
+            const webpQualitySlider = document.getElementById('webpQualitySlider');
+            const jpegQualityValue = document.getElementById('jpegQualityValue');
+            const webpQualityValue = document.getElementById('webpQualityValue');
+            const jpegCompression = document.getElementById('jpegCompression');
+            const webpCompression = document.getElementById('webpCompression');
+            
+            // Buttons
+            const resetAdjustmentsBtn = document.getElementById('resetAdjustments');
+            const cropButton = document.getElementById('cropButton');
+            const applyCropButton = document.getElementById('applyCropButton');
+            const cancelCropButton = document.getElementById('cancelCropButton');
+            const resizeImageBtn = document.getElementById('resizeImage');
+            const optimizeWebBtn = document.getElementById('optimizeWeb');
+            const downloadImageBtn = document.getElementById('downloadImage');
+            const resetImageBtn = document.getElementById('resetImage');
+            
+            // Resize inputs
+            const resizeWidthInput = document.getElementById('resizeWidth');
+            const resizeHeightInput = document.getElementById('resizeHeight');
+            
+            // Format options
+            const formatOptions = document.querySelectorAll('.format-option');
+            
+            // Show notification
+            function showNotification(message, duration = 3000) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, duration);
+            }
+            
+            // Format selection
+            formatOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    formatOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedFormat = this.dataset.format;
+                    
+                    // Show/hide compression controls based on format
+                    jpegCompression.classList.toggle('show', selectedFormat === 'jpeg');
+                    webpCompression.classList.toggle('show', selectedFormat === 'webp');
+                });
+            });
+            
+            // Update compression quality displays
+            jpegQualitySlider.addEventListener('input', function() {
+                jpegQualityValue.textContent = this.value + '%';
+            });
+            
+            webpQualitySlider.addEventListener('input', function() {
+                webpQualityValue.textContent = this.value + '%';
+            });
+            
+            // Load image
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        originalImage = img;
+                        currentImage = img;
+                        
+                        // Set canvas dimensions
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        
+                        // Draw image
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Show canvas, hide placeholder
+                        canvas.style.display = 'block';
+                        canvasPlaceholder.style.display = 'none';
+                        
+                        // Update resize inputs
+                        resizeWidthInput.value = img.width;
+                        resizeHeightInput.value = img.height;
+                        
+                        showNotification('Image loaded successfully!');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Apply adjustments
+            function applyAdjustments() {
+                if (!originalImage) return;
+                
+                // Get slider values
+                const brightness = brightnessSlider.value;
+                const contrast = contrastSlider.value;
+                const hue = hueSlider.value;
+                const saturation = saturationSlider.value;
+                const red = redSlider.value;
+                const green = greenSlider.value;
+                const blue = blueSlider.value;
+                const highlights = highlightsSlider.value;
+                const shadows = shadowsSlider.value;
+                
+                // Update value displays
+                brightnessValue.textContent = brightness + '%';
+                contrastValue.textContent = contrast + '%';
+                hueValue.textContent = hue + '°';
+                saturationValue.textContent = saturation + '%';
+                redValue.textContent = red;
+                greenValue.textContent = green;
+                blueValue.textContent = blue;
+                highlightsValue.textContent = highlights;
+                shadowsValue.textContent = shadows;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Apply basic adjustments using CSS filters
+                const filter = `brightness(${brightness}%) contrast(${contrast}%) hue-rotate(${hue}deg) saturate(${saturation}%)`;
+                ctx.filter = filter;
+                ctx.drawImage(originalImage, 0, 0);
+                
+                // Reset filter for further processing
+                ctx.filter = 'none';
+                
+                // Get image data for color correction and tonal adjustments
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Apply color correction
+                for (let i = 0; i < data.length; i += 4) {
+                    // Red channel
+                    data[i] = Math.min(255, Math.max(0, data[i] + (red * 2.55)));
+                    
+                    // Green channel
+                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + (green * 2.55)));
+                    
+                    // Blue channel
+                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + (blue * 2.55)));
+                }
+                
+                // Apply tonal adjustments (highlights and shadows)
+                for (let i = 0; i < data.length; i += 4) {
+                    // Calculate luminance (perceived brightness)
+                    const luminance = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+                    
+                    // Apply highlights adjustment (affects lighter areas)
+                    if (luminance > 0.5) {
+                        const highlightFactor = 1 + (highlights / 200) * (luminance - 0.5) * 2;
+                        data[i] = Math.min(255, data[i] * highlightFactor);
+                        data[i + 1] = Math.min(255, data[i + 1] * highlightFactor);
+                        data[i + 2] = Math.min(255, data[i + 2] * highlightFactor);
+                    }
+                    
+                    // Apply shadows adjustment (affects darker areas)
+                    if (luminance < 0.5) {
+                        const shadowFactor = 1 + (shadows / 200) * (0.5 - luminance) * 2;
+                        data[i] = Math.min(255, data[i] * shadowFactor);
+                        data[i + 1] = Math.min(255, data[i + 1] * shadowFactor);
+                        data[i + 2] = Math.min(255, data[i + 2] * shadowFactor);
+                    }
+                }
+                
+                // Put the modified image data back to canvas
+                ctx.putImageData(imageData, 0, 0);
+            }
+            
+            // Add event listeners to all sliders
+            const allSliders = [
+                brightnessSlider, contrastSlider, hueSlider, saturationSlider,
+                redSlider, greenSlider, blueSlider, highlightsSlider, shadowsSlider
+            ];
+            
+            allSliders.forEach(slider => {
+                slider.addEventListener('input', applyAdjustments);
+            });
+            
+            // Reset adjustments
+            resetAdjustmentsBtn.addEventListener('click', function() {
+                brightnessSlider.value = 100;
+                contrastSlider.value = 100;
+                hueSlider.value = 0;
+                saturationSlider.value = 100;
+                redSlider.value = 0;
+                greenSlider.value = 0;
+                blueSlider.value = 0;
+                highlightsSlider.value = 0;
+                shadowsSlider.value = 0;
+                
+                applyAdjustments();
+                showNotification('Adjustments reset');
+            });
+            
+            // Crop functionality
+            cropButton.addEventListener('click', function() {
+                if (!originalImage) {
+                    showNotification('Please load an image first');
+                    return;
+                }
+                
+                cropMode = true;
+                cropButton.style.display = 'none';
+                applyCropButton.style.display = 'block';
+                cancelCropButton.style.display = 'block';
+                cropModeInfo.style.display = 'block';
+                canvas.style.cursor = 'crosshair';
+                
+                showNotification('Crop mode activated. Click and drag to select area.');
+            });
+            
+            // Cancel crop
+            cancelCropButton.addEventListener('click', function() {
+                exitCropMode();
+            });
+            
+            // Exit crop mode
+            function exitCropMode() {
+                cropMode = false;
+                cropButton.style.display = 'block';
+                applyCropButton.style.display = 'none';
+                cancelCropButton.style.display = 'none';
+                cropModeInfo.style.display = 'none';
+                cropOverlay.style.display = 'none';
+                canvas.style.cursor = 'default';
+            }
+            
+            // Mouse events for cropping
+            canvas.addEventListener('mousedown', function(e) {
+                if (!cropMode) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                cropStartX = e.clientX - rect.left;
+                cropStartY = e.clientY - rect.top;
+                isDrawingCrop = true;
+                
+                // Reset crop overlay
+                cropOverlay.style.left = cropStartX + 'px';
+                cropOverlay.style.top = cropStartY + 'px';
+                cropOverlay.style.width = '0px';
+                cropOverlay.style.height = '0px';
+                cropOverlay.style.display = 'block';
+            });
+            
+            canvas.addEventListener('mousemove', function(e) {
+                if (!cropMode || !isDrawingCrop) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                cropEndX = e.clientX - rect.left;
+                cropEndY = e.clientY - rect.top;
+                
+                // Update crop overlay
+                const left = Math.min(cropStartX, cropEndX);
+                const top = Math.min(cropStartY, cropEndY);
+                const width = Math.abs(cropEndX - cropStartX);
+                const height = Math.abs(cropEndY - cropStartY);
+                
+                cropOverlay.style.left = left + 'px';
+                cropOverlay.style.top = top + 'px';
+                cropOverlay.style.width = width + 'px';
+                cropOverlay.style.height = height + 'px';
+            });
+            
+            canvas.addEventListener('mouseup', function() {
+                if (!cropMode) return;
+                isDrawingCrop = false;
+            });
+            
+            // Apply crop
+            applyCropButton.addEventListener('click', function() {
+                if (!originalImage) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                // Calculate crop area in canvas coordinates
+                const left = Math.min(cropStartX, cropEndX) * scaleX;
+                const top = Math.min(cropStartY, cropEndY) * scaleY;
+                const width = Math.abs(cropEndX - cropStartX) * scaleX;
+                const height = Math.abs(cropEndY - cropStartY) * scaleY;
+                
+                // Create temporary canvas for cropping
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                
+                // Draw the cropped area
+                tempCtx.drawImage(canvas, left, top, width, height, 0, 0, width, height);
+                
+                // Update main canvas
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(tempCanvas, 0, 0);
+                
+                // Update original image
+                const croppedImg = new Image();
+                croppedImg.onload = function() {
+                    originalImage = croppedImg;
+                    showNotification(`Image cropped to ${Math.round(width)}x${Math.round(height)}`);
+                };
+                croppedImg.src = canvas.toDataURL();
+                
+                // Update resize inputs
+                resizeWidthInput.value = Math.round(width);
+                resizeHeightInput.value = Math.round(height);
+                
+                exitCropMode();
+            });
+            
+            // Resize image
+            resizeImageBtn.addEventListener('click', function() {
+                if (!originalImage) {
+                    showNotification('Please load an image first');
+                    return;
+                }
+                
+                const width = parseInt(resizeWidthInput.value);
+                const height = parseInt(resizeHeightInput.value);
+                
+                if (!width || !height) {
+                    showNotification('Please enter valid dimensions');
+                    return;
+                }
+                
+                // Create temporary canvas
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                
+                // Draw current image with new dimensions
+                tempCtx.drawImage(canvas, 0, 0, width, height);
+                
+                // Update main canvas
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(tempCanvas, 0, 0);
+                
+                // Update original image to the resized version
+                const resizedImg = new Image();
+                resizedImg.onload = function() {
+                    originalImage = resizedImg;
+                    showNotification(`Image resized to ${width}x${height}`);
+                };
+                resizedImg.src = canvas.toDataURL();
+            });
+            
+            // Optimize for web
+            optimizeWebBtn.addEventListener('click', function() {
+                if (!originalImage) {
+                    showNotification('Please load an image first');
+                    return;
+                }
+                
+                // Get current dimensions
+                const currentWidth = canvas.width;
+                const currentHeight = canvas.height;
+                
+                // Calculate new dimensions (max 1200px width/height)
+                let newWidth = currentWidth;
+                let newHeight = currentHeight;
+                
+                if (currentWidth > 1200 || currentHeight > 1200) {
+                    const ratio = Math.min(1200 / currentWidth, 1200 / currentHeight);
+                    newWidth = Math.floor(currentWidth * ratio);
+                    newHeight = Math.floor(currentHeight * ratio);
+                }
+                
+                // Update resize inputs
+                resizeWidthInput.value = newWidth;
+                resizeHeightInput.value = newHeight;
+                
+                // Resize the image
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCanvas.width = newWidth;
+                tempCanvas.height = newHeight;
+                
+                tempCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                ctx.drawImage(tempCanvas, 0, 0);
+                
+                // Update original image
+                const optimizedImg = new Image();
+                optimizedImg.onload = function() {
+                    originalImage = optimizedImg;
+                    showNotification(`Image optimized to ${newWidth}x${newHeight}`);
+                };
+                optimizedImg.src = canvas.toDataURL('image/jpeg', 0.85);
+            });
+            
+            // Download image
+            downloadImageBtn.addEventListener('click', function() {
+                if (!originalImage) {
+                    showNotification('Please load an image first');
+                    return;
+                }
+                
+                let mimeType, extension, quality;
+                
+                switch(selectedFormat) {
+                    case 'jpeg':
+                        mimeType = 'image/jpeg';
+                        extension = 'jpg';
+                        quality = jpegQualitySlider.value / 100;
+                        break;
+                    case 'png':
+                        mimeType = 'image/png';
+                        extension = 'png';
+                        quality = null; // PNG doesn't use quality
+                        break;
+                    case 'webp':
+                        mimeType = 'image/webp';
+                        extension = 'webp';
+                        quality = webpQualitySlider.value / 100;
+                        break;
+                    default:
+                        return;
+                }
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `edited-image.${extension}`;
+                
+                // Use quality setting for JPEG and WebP
+                if (quality !== null) {
+                    link.href = canvas.toDataURL(mimeType, quality);
+                } else {
+                    link.href = canvas.toDataURL(mimeType);
+                }
+                
+                link.click();
+                showNotification(`Image downloaded as ${extension.toUpperCase()} with ${quality ? Math.round(quality * 100) + '% quality' : 'lossless compression'}`);
+            });
+            
+            // Reset image
+            resetImageBtn.addEventListener('click', function() {
+                if (!originalImage) {
+                    showNotification('No image to reset');
+                    return;
+                }
+                
+                // Reset canvas to original image
+                canvas.width = originalImage.width;
+                canvas.height = originalImage.height;
+                ctx.drawImage(originalImage, 0, 0);
+                
+                // Reset sliders
+                brightnessSlider.value = 100;
+                contrastSlider.value = 100;
+                hueSlider.value = 0;
+                saturationSlider.value = 100;
+                redSlider.value = 0;
+                greenSlider.value = 0;
+                blueSlider.value = 0;
+                highlightsSlider.value = 0;
+                shadowsSlider.value = 0;
+                
+                // Update value displays
+                brightnessValue.textContent = '100%';
+                contrastValue.textContent = '100%';
+                hueValue.textContent = '0°';
+                saturationValue.textContent = '100%';
+                redValue.textContent = '0';
+                greenValue.textContent = '0';
+                blueValue.textContent = '0';
+                highlightsValue.textContent = '0';
+                shadowsValue.textContent = '0';
+                
+                // Update resize inputs
+                resizeWidthInput.value = originalImage.width;
+                resizeHeightInput.value = originalImage.height;
+                
+                showNotification('Image reset to original');
+            });
+        });
+    </script>
+</body>
+</html>
